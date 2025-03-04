@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Учи английский</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: #ffffff url('https://source.unsplash.com/1600x900/?london,telephone') no-repeat center center/cover;
+      color: black;
+      margin: 0;
+      padding: 0;
+    }
+    /* Логотип при загрузке */
+    #logo-container {
+      width: 100%;
+      height: 100vh;
+      background: rgba(255, 255, 255, 0.9);
+      position: fixed;
+      top: 0;
+      left: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    #logo {
+      max-width: 300px;
+    }
+    /* Игровой контейнер */
+    #game-container {
+      margin-top: 50px;
+      display: none;
+      position: relative;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.85);
+      border-radius: 10px;
+      max-width: 600px;
+      margin: 50px auto;
+    }
+    #back-arrow {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      font-size: 30px;
+      cursor: pointer;
+    }
+    #next-level {
+      display: none;
+      margin-top: 20px;
+      padding: 10px;
+      font-size: 18px;
+      background-color: yellow;
+      cursor: pointer;
+      border: 2px solid black;
+      border-radius: 5px;
+    }
+    /* Движущийся кот в правом верхнем углу */
+    #moving-cat {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      font-size: 18px;
+      background-color: lightblue;
+      padding: 5px 10px;
+      border-radius: 10px;
+      animation: moveCat 3s infinite alternate;
+      z-index: 1100;
+    }
+    @keyframes moveCat {
+      from { right: 10px; }
+      to { right: 50px; }
+    }
+    /* Стили для вопроса и вариантов ответов */
+    #word {
+      font-size: 40px;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+    .answer-btn {
+      display: block;
+      width: 200px;
+      margin: 10px auto;
+      padding: 15px;
+      font-size: 20px;
+      cursor: pointer;
+      border: 2px solid black;
+      border-radius: 10px;
+      background-color: lightgray;
+      transition: background-color 0.3s;
+    }
+    .correct { background-color: green !important; color: white; }
+    .wrong { background-color: red !important; color: white; }
+    #score {
+      font-size: 24px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Логотип при загрузке -->
+  <div id="logo-container">
+    <img id="logo" src="https://avatars.dzeninfra.ru/get-zen_doc/9795216/pub_6467333b28bffe526c2f2ee9_646733cd59d57c1f7feae1e9/scale_1200" alt="Учи английский">
+  </div>
+
+  <!-- Движущийся кот -->
+  <div id="moving-cat">🐱 Учи английский в жизни пригодится</div>
+
+  <!-- Игровой контейнер -->
+  <div id="game-container">
+    <div id="back-arrow"></div>
+    <button id="next-level">➡ Следующий уровень</button>
+    <!-- Отображение английского слова -->
+    <div id="word"></div>
+    <!-- Три варианта ответа (на русском) -->
+    <button class="answer-btn"></button>
+    <button class="answer-btn"></button>
+    <button class="answer-btn"></button>
+    <div id="score">Очки: <span id="points">0</span></div>
+  </div>
+
+  <!-- Аудиофайлы -->
+  <audio id="correct-sound" src="c:\Users\user\Downloads\pole_letter_correct (1).mp3"></audio>
+  <audio id="wrong-sound" src="c:\Users\user\Downloads\6_sto-k-odnomu-ne-pra_ilnyy-ot_e.mp3"></audio>
+
+  <script>
+    // Через 3 секунды скрываем логотип и показываем игру
+    setTimeout(() => {
+      document.getElementById("logo-container").style.display = "none";
+      document.getElementById("game-container").style.display = "block";
+    }, 3000);
+
+    // Массив пар: [английское слово, русский перевод]
+    const pairs = [
+      ["apple", "яблоко"],
+      ["banana", "банан"],
+      ["pear", "груша"],
+      ["pepper", "перец"],
+      ["carrot", "морковь"],
+      ["grape", "виноград"],
+      ["pineapple", "ананас"],
+      ["cherry", "вишня"],
+      ["watermelon", "арбуз"],
+      ["melon", "дыня"],
+      ["orange", "апельсин"],
+      ["strawberry", "клубника"],
+      ["peach", "персик"],
+      ["plum", "слива"],
+      ["cucumber", "огурец"],
+      ["potato", "картофель"],
+      ["tomato", "помидор"],
+      ["onion", "лук"],
+      ["garlic", "чеснок"],
+      ["pumpkin", "тыква"],
+      ["mango", "манго"],
+      ["kiwi", "киви"],
+      ["lemon", "лимон"],
+      ["lime", "лайм"],
+      ["blueberry", "черника"],
+      ["raspberry", "малина"],
+      ["blackberry", "ежевика"],
+      ["grapefruit", "грейпфрут"],
+      ["pomegranate", "гранат"],
+      ["papaya", "папайя"],
+      ["apricot", "абрикос"],
+      ["avocado", "авокадо"],
+      ["cantaloupe", "канталупа"],
+      ["date", "финик"],
+      ["fig", "инжир"],
+      ["guava", "гуава"],
+      ["jackfruit", "джекфрут"],
+      ["kumquat", "кумкват"],
+      ["lychee", "личи"],
+      ["nectarine", "нектарин"],
+      ["olive", "оливка"],
+      ["passionfruit", "маракуйя"],
+      ["quince", "айва"],
+      ["starfruit", "карамбола"],
+      ["tangerine", "мандарин"],
+      ["ugli fruit", "угли фрукт"],
+      ["voavanga", "воаванга"],
+      ["water apple", "водное яблоко"],
+      ["ximenia", "ксимения"],
+      ["yellow passionfruit", "желтая маракуйя"],
+      ["ziziphus", "хурма"],
+      ["broccoli", "брокколи"],
+      ["cabbage", "капуста"],
+      ["cauliflower", "цветная капуста"],
+      ["celery", "сельдерей"],
+      ["corn", "кукуруза"],
+      ["eggplant", "баклажан"],
+      ["lettuce", "салат"],
+      ["mushroom", "гриб"],
+      ["pea", "горох"],
+      ["spinach", "шпинат"],
+      ["sweet potato", "батат"],
+      ["turnip", "репа"],
+      ["zucchini", "цукини"],
+      ["radish", "редис"],
+      ["beet", "свекла"],
+      ["artichoke", "артишок"],
+      ["asparagus", "спаржа"],
+      ["leek", "порей"],
+      ["parsnip", "пастернак"]
+      ["btather", "брат"]
+      ["sister", "сестра"]
+      ["book", "книга"]
+      ["milk", "молоко"]
+    ];
+    
+    
+
+    // Один уровень (70 слов)
+    const totalLevels = 1;
+    let levels = [];
+
+    // Функция перемешивания массива
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+    }
+    shuffle(pairs);
+    levels.push(pairs);
+
+    let currentLevel = 0;
+    let currentWord = 0;
+    let coin  = 0;
+
+    // Загрузка текущего слова и вариантов ответа
+    function loadWord() {
+      if (currentWord >= levels[currentLevel].length) {
+        document.getElementById("next-level").style.display = "block";
+        return;
+      }
+      let wordObj = levels[currentLevel][currentWord];
+      document.getElementById("word").innerText = wordObj[0];
+      let buttons = document.getElementsByClassName("answer-btn");
+      let currentLevelWords = levels[currentLevel];
+      let incorrect = [];
+      while (incorrect.length < 2) {
+        let rand = Math.floor(Math.random() * currentLevelWords.length);
+        if (currentLevelWords[rand][1] !== wordObj[1] && !incorrect.includes(currentLevelWords[rand][1])) {
+          incorrect.push(currentLevelWords[rand][1]);
+        }
+      }
+      let options = [wordObj[1], ...incorrect];
+      shuffle(options);
+      options.forEach((option, index) => {
+        buttons[index].innerText = option;
+        buttons[index].classList.remove("correct", "wrong");
+        buttons[index].style.backgroundColor = "lightgray";
+        buttons[index].onclick = function () {
+          checkAnswer(option, wordObj[1], buttons[index]);
+        };
+      });
+    }
+
+    // Проверка ответа
+    function checkAnswer(selected, correct, btn) {
+      let correctSound = document.getElementById("correct-sound");
+      let wrongSound = document.getElementById("wrong-sound");
+      if (selected === correct) {
+        btn.classList.add("correct");
+        points += 10;
+        correctSound.play();
+      } else {
+        btn.classList.add("wrong");
+        points -= 2;
+        wrongSound.play();
+      }
+      document.getElementById("points").innerText = points;
+      setTimeout(() => {
+        currentWord++;
+        if (currentWord < levels[currentLevel].length) {
+          loadWord();
+        } else {
+          document.getElementById("next-level").style.display = "block";
+        }
+      }, 500);
+    }
+
+    // Переход на следующий уровень
+    document.getElementById("next-level").addEventListener("click", function () {
+      alert("Уровень пройден!");
+    });
+
+    // Кнопка возврата
+    document.getElementById("back-arrow").addEventListener("click", function () {
+      alert("Возврат к предыдущему уровню");
+    });
+
+    loadWord();
+  </script>
+</body>
+</html>
+
+
+
+
+
+
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Английский язык</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            background-image: url('https://avatars.mds.yandex.net/i?id=7559a83711fee96581a660196727e4019b008d4b-5300055-images-thumbs&n=13'); /* Фон на тему английского */
+            background-size: cover;
+            background-position: center;
+        }
+    </style>
+</head>
+<body>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Учи английский</title>
+  <style>
+    /* ваши стили здесь */
+  </style>
+</head>
+<body>
+  <!-- ваш HTML здесь -->
+
+  <script>
+    // Загрузка очков из localStorage при загрузке страницы
+    let points = localStorage.getItem("points") ? parseInt(localStorage.getItem("points")) : 0;
+
+    // Установка очков на экран
+    document.getElementById("points").innerText = points;
+
+    // Функция проверки ответа
+    function checkAnswer(selected, correct, btn) {
+      let correctSound = document.getElementById("correct-sound");
+      let wrongSound = document.getElementById("wrong-sound");
+      if (selected === correct) {
+        btn.classList.add("correct");
+        points += 10; // Увеличиваем очки при правильном ответе
+        correctSound.play();
+      } else {
+        btn.classList.add("wrong");
+        points -= 2; // Уменьшаем очки при неправильном ответе
+        wrongSound.play();
+      }
+      document.getElementById("points").innerText = points;
+
+      // Сохраняем очки в localStorage
+      localStorage.setItem("points", points);
+
+      setTimeout(() => {
+        currentWord++;
+        if (currentWord < levels[currentLevel].length) {
+          loadWord();
+        } else {
+          document.getElementById("next-level").style.display = "block";
+        }
+      }, 500);
+    }
+
+    // Вы можете добавить другие функции, такие как сброс очков
+    // или переход к следующему уровню, при необходимости
+
+    // Загрузка слова в начало
+    loadWord();
+  </script>
+</body>
+</html>
